@@ -230,7 +230,17 @@ class QRViewController {
       List<BarcodeFormat>? barcodeFormats) async {
     // We need to update the dimension before the scan is started.
     try {
-      await QRViewController.updateDimensions(key, _channel, overlay: overlay);
+      // Must check updateDimensions result before calling startScan.
+      var success = await QRViewController.updateDimensions(key, _channel,
+          overlay: overlay);
+      if (!success) {
+        // If the call returned false, we can't start the scan,
+        // so retry after first frame is drawn
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _startScan(key, overlay, barcodeFormats);
+        });
+        return;
+      }
       return await _channel.invokeMethod(
           'startScan', barcodeFormats?.map((e) => e.asInt()).toList() ?? []);
     } on PlatformException catch (e) {
@@ -333,6 +343,10 @@ class QRViewController {
       await Future.delayed(const Duration(milliseconds: 300));
       if (key.currentContext == null) return false;
       final renderBox = key.currentContext!.findRenderObject() as RenderBox;
+      // if the render box is not yet laid out, call to renderBox.size throws
+      if (!renderBox.hasSize) {
+        return false;
+      }
       try {
         await channel.invokeMethod('setDimensions', {
           'width': renderBox.size.width,
