@@ -84,6 +84,10 @@ class QrScannerOverlayShape extends ShapeBorder {
     final _cutOutHeight =
         cutOutHeight < height ? cutOutHeight : height - borderOffset;
 
+    final paint = Paint()
+      ..color = borderColor
+      ..style = PaintingStyle.fill;
+
     final backgroundPaint = Paint()
       ..color = overlayColor
       ..style = PaintingStyle.fill;
@@ -112,7 +116,7 @@ class QrScannerOverlayShape extends ShapeBorder {
     canvas
       ..saveLayer(
         rect,
-        backgroundPaint,
+        paint,
       )
       ..drawRect(
         rect,
